@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>La Playa — Acceso</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      min-height: 100vh;
+      background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+      display: flex; align-items: center; justify-content: center;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      padding: 16px;
+    }
+    .card {
+      background: rgba(255,255,255,0.05);
+      backdrop-filter: blur(20px);
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 20px;
+      padding: 40px 36px;
+      width: 100%; max-width: 400px;
+      box-shadow: 0 25px 50px rgba(0,0,0,0.4);
+    }
+    .logo { text-align: center; margin-bottom: 32px; }
+    .logo-icon { font-size: 48px; }
+    h1 { color: #fff; font-size: 22px; font-weight: 700; margin-top: 8px; }
+    .subtitle { color: rgba(255,255,255,0.5); font-size: 13px; margin-top: 4px; }
+
+    label { display: block; color: rgba(255,255,255,0.7); font-size: 13px;
+            font-weight: 600; margin-bottom: 6px; margin-top: 20px; letter-spacing: .5px; }
+    select, input[type="password"] {
+      width: 100%; padding: 12px 16px;
+      background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.15);
+      border-radius: 10px; color: #fff; font-size: 15px; outline: none;
+      transition: border-color .2s;
+      -webkit-appearance: none;
+    }
+    select option { background: #1a1a2e; color: #fff; }
+    select:focus, input:focus { border-color: #4fc3f7; }
+    input::placeholder { color: rgba(255,255,255,0.3); }
+
+    .pin-row { display: flex; gap: 10px; margin-top: 0; }
+    .pin-row input {
+      width: 52px; height: 52px; text-align: center; font-size: 20px;
+      font-weight: 700; padding: 0; letter-spacing: 2px;
+    }
+
+    .btn {
+      width: 100%; margin-top: 28px; padding: 14px;
+      background: linear-gradient(135deg, #4fc3f7, #0288d1);
+      border: none; border-radius: 12px;
+      color: #fff; font-size: 16px; font-weight: 700;
+      cursor: pointer; transition: opacity .2s, transform .1s;
+    }
+    .btn:hover { opacity: .9; }
+    .btn:active { transform: scale(.98); }
+
+    .error {
+      background: rgba(244,67,54,.15); border: 1px solid rgba(244,67,54,.4);
+      color: #ef9a9a; border-radius: 10px; padding: 12px 16px;
+      font-size: 14px; margin-top: 20px; text-align: center;
+    }
+    .admin-link {
+      text-align: center; margin-top: 24px;
+      color: rgba(255,255,255,0.3); font-size: 12px;
+    }
+    .admin-link a { color: rgba(255,255,255,0.4); text-decoration: none; }
+    .admin-link a:hover { color: rgba(255,255,255,.7); }
+  </style>
+</head>
+<body>
+<div class="card">
+  <div class="logo">
+    <div class="logo-icon">🏠</div>
+    <h1>Resi La Playa</h1>
+    <div class="subtitle">Sistema de limpieza</div>
+  </div>
+
+  {% if error %}
+  <div class="error">{{ error }}</div>
+  {% endif %}
+
+  <form method="POST" action="/login" id="loginForm">
+    <label for="name">¿Quién sos?</label>
+    <select name="name" id="name" required>
+      <option value="" disabled selected>Elegí tu nombre…</option>
+      {% for n in names %}
+      <option value="{{ n }}">{{ n }}</option>
+      {% endfor %}
+      <option value="admin">— Admin —</option>
+    </select>
+
+    <label for="pin">PIN</label>
+    <input type="password" name="pin" id="pin" maxlength="8"
+           placeholder="••••" autocomplete="current-password" required>
+
+    <button class="btn" type="submit">Entrar →</button>
+  </form>
+
+  <div class="admin-link">
+    ¿No tenés PIN? Pedíselo al <a href="#">tesorero</a>
+  </div>
+</div>
+</body>
+</html>

@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>La Playa — {{ name }}</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      min-height: 100vh;
+      background: linear-gradient(160deg, #1a1a2e 0%, #16213e 60%, #0f3460 100%);
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      color: #fff; padding: 16px;
+    }
+    header {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 12px 0 24px;
+    }
+    .brand { font-size: 18px; font-weight: 700; }
+    .brand span { color: #4fc3f7; }
+    .logout { color: rgba(255,255,255,.4); font-size: 13px; text-decoration: none; }
+    .logout:hover { color: rgba(255,255,255,.8); }
+
+    h2 { font-size: 24px; font-weight: 800; margin-bottom: 4px; }
+    .subtitle { color: rgba(255,255,255,.5); font-size: 14px; margin-bottom: 28px; }
+
+    .card {
+      background: rgba(255,255,255,.06);
+      border: 1px solid rgba(255,255,255,.1);
+      border-radius: 16px; padding: 20px 22px; margin-bottom: 16px;
+    }
+    .card-title {
+      font-size: 11px; font-weight: 700; letter-spacing: 1px;
+      text-transform: uppercase; color: rgba(255,255,255,.4);
+      margin-bottom: 14px;
+    }
+
+    /* Tarea card */
+    .task-item {
+      display: flex; align-items: flex-start; gap: 14px;
+      padding: 14px 0;
+      border-bottom: 1px solid rgba(255,255,255,.07);
+    }
+    .task-item:last-child { border-bottom: none; padding-bottom: 0; }
+    .task-icon {
+      width: 42px; height: 42px; border-radius: 12px; flex-shrink: 0;
+      display: flex; align-items: center; justify-content: center; font-size: 20px;
+    }
+    .task-icon.pending  { background: rgba(79,195,247,.15); }
+    .task-icon.done     { background: rgba(76,175,80,.15);  }
+    .task-icon.absent   { background: rgba(255,152,0,.15);  }
+    .task-name { font-size: 16px; font-weight: 700; }
+    .task-freq { font-size: 13px; color: rgba(255,255,255,.5); margin-top: 3px; }
+    .badge {
+      display: inline-block; font-size: 11px; font-weight: 700;
+      padding: 3px 8px; border-radius: 20px; margin-top: 6px;
+    }
+    .badge.done    { background: rgba(76,175,80,.2);  color: #81c784; }
+    .badge.pending { background: rgba(79,195,247,.2); color: #4fc3f7; }
+    .badge.absent  { background: rgba(255,152,0,.2);  color: #ffb74d; }
+
+    .no-task {
+      text-align: center; padding: 20px 0;
+      color: rgba(255,255,255,.4); font-size: 15px;
+    }
+    .no-task .icon { font-size: 36px; margin-bottom: 10px; }
+
+    /* Deuda card */
+    .debt-ok   { color: #81c784; }
+    .debt-warn { color: #ff8a65; }
+    .debt-amount {
+      font-size: 32px; font-weight: 800; margin: 8px 0 4px;
+    }
+    .debt-detail {
+      font-size: 13px; color: rgba(255,255,255,.45); margin-top: 12px;
+    }
+    .months-grid {
+      display: flex; flex-wrap: wrap; gap: 6px; margin-top: 12px;
+    }
+    .month-pill {
+      font-size: 12px; padding: 4px 10px; border-radius: 20px;
+      background: rgba(255,255,255,.08); border: 1px solid rgba(255,255,255,.12);
+    }
+    .month-pill.paid   { background: rgba(76,175,80,.2);  border-color: rgba(76,175,80,.3);  color: #81c784; }
+    .month-pill.unpaid { background: rgba(244,67,54,.15); border-color: rgba(244,67,54,.3);  color: #ef9a9a; }
+
+    .alias-box {
+      margin-top: 14px; background: rgba(79,195,247,.08);
+      border: 1px solid rgba(79,195,247,.2); border-radius: 10px;
+      padding: 12px 14px; font-size: 14px;
+    }
+    .alias-box strong { color: #4fc3f7; font-size: 16px; display: block; margin-top: 2px; }
+
+    .error-box {
+      background: rgba(244,67,54,.15); border: 1px solid rgba(244,67,54,.3);
+      border-radius: 12px; padding: 16px; color: #ef9a9a;
+      margin-bottom: 16px; font-size: 14px;
+    }
+  </style>
+</head>
+<body>
+<header>
+  <div class="brand">🏠 Resi <span>La Playa</span></div>
+  <a href="/logout" class="logout">Salir →</a>
+</header>
+
+<h2>Hola, {{ name }}! 👋</h2>
+<p class="subtitle">
+  {% if week_date %}Semana del {{ week_date }}{% else %}Cargando semana actual…{% endif %}
+</p>
+
+{% if error %}
+<div class="error-box">⚠️ {{ error }}</div>
+{% endif %}
+
+<!-- Tareas de la semana -->
+<div class="card">
+  <div class="card-title">🧹 Tu tarea esta semana</div>
+
+  {% if my_tasks %}
+    {% for t in my_tasks %}
+    <div class="task-item">
+      <div class="task-icon {% if t.done %}done{% elif t.absent %}absent{% else %}pending{% endif %}">
+        {% if t.done %}✅{% elif t.absent %}😴{% elif t.pending %}⏳{% else %}🧹{% endif %}
+      </div>
+      <div>
+        <div class="task-name">{{ t.task }}</div>
+        <div class="task-freq">📅 {{ t.freq }}</div>
+        {% if t.done %}
+          <span class="badge done">Completada ✓</span>
+        {% elif t.absent %}
+          <span class="badge absent">Ausente</span>
+        {% elif t.pending %}
+          <span class="badge pending">Pendiente…</span>
+        {% else %}
+          <span class="badge pending">Esta semana</span>
+        {% endif %}
+      </div>
+    </div>
+    {% endfor %}
+  {% else %}
+  <div class="no-task">
+    <div class="icon">🎉</div>
+    Esta semana no te toca ninguna tarea.<br>
+    <span style="font-size:13px; margin-top:6px; display:block; opacity:.6">
+      Igual podés hacer una tarea extraordinaria para reducir multas.
+    </span>
+  </div>
+  {% endif %}
+</div>
+
+<!-- Deuda -->
+<div class="card">
+  <div class="card-title">💰 Tu estado financiero</div>
+
+  {% if debt %}
+    {% if debt.total == 0 %}
+      <div class="debt-ok">
+        <div class="debt-amount">$0</div>
+        <div style="font-size:14px; color: #81c784;">¡Estás al día! 🎉</div>
+      </div>
+    {% else %}
+      <div class="debt-warn">
+        <div class="debt-amount">{{ debt.debt_str }}</div>
+        {% if debt.multas > 0 %}
+        <div class="debt-detail">Incluye ${{ debt.multas|int }} en multas</div>
+        {% endif %}
+      </div>
+
+      {% if debt.monthly %}
+      <div class="months-grid">
+        {% for month, val in debt.monthly.items() %}
+          {% if val == 'X' %}
+            <span class="month-pill paid">{{ month }} ✓</span>
+          {% elif val not in ('', '-') %}
+            <span class="month-pill unpaid">{{ month }} ✗</span>
+          {% endif %}
+        {% endfor %}
+      </div>
+      {% endif %}
+
+      <div class="alias-box">
+        Para pagar, usá el alias:<br>
+        <strong>RESI.PAGOS.UALA</strong>
+        <div style="font-size:12px; color:rgba(255,255,255,.4); margin-top:6px;">
+          No te olvides de mandar el comprobante al tesorero ✅
+        </div>
+      </div>
+    {% endif %}
+  {% else %}
+    <div style="color: rgba(255,255,255,.4); font-size:14px; padding: 10px 0;">
+      No se encontró información financiera para tu usuario.
+    </div>
+  {% endif %}
+</div>
+
+<!-- Recordatorio extraordinarias -->
+<div class="card" style="background: rgba(79,195,247,.05); border-color: rgba(79,195,247,.15);">
+  <div class="card-title">⭐ Tareas extraordinarias</div>
+  <div style="font-size: 14px; color: rgba(255,255,255,.6); line-height: 1.6;">
+    Podés hacer tareas extraordinarias para reducir tus multas.<br>
+    Cada tarea dura ~1:30 hs y te descuenta <strong style="color:#4fc3f7">$330</strong> en multas.<br>
+    Solo se pueden hacer <strong>2 grupales por mes</strong>.
+  </div>
+</div>
+
+</body>
+</html>

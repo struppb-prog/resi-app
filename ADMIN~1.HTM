@@ -1,0 +1,696 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>La Playa — Admin</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background: #0d1117; color: #e6edf3;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      min-height: 100vh;
+    }
+
+    /* ---- Sidebar nav ---- */
+    .layout { display: flex; min-height: 100vh; }
+    .sidebar {
+      width: 220px; background: #161b22; border-right: 1px solid #30363d;
+      display: flex; flex-direction: column; padding: 20px 0; flex-shrink: 0;
+    }
+    .sidebar-brand {
+      font-size: 16px; font-weight: 800; color: #58a6ff;
+      padding: 0 20px 24px; border-bottom: 1px solid #30363d; margin-bottom: 12px;
+    }
+    .nav-item {
+      display: flex; align-items: center; gap: 10px;
+      padding: 10px 20px; cursor: pointer; font-size: 14px; font-weight: 500;
+      color: #8b949e; border-left: 3px solid transparent; transition: all .15s;
+    }
+    .nav-item:hover { color: #e6edf3; background: rgba(255,255,255,.04); }
+    .nav-item.active {
+      color: #58a6ff; background: rgba(88,166,255,.08);
+      border-left-color: #58a6ff;
+    }
+    .nav-badge {
+      margin-left: auto; background: #da3633; color: #fff;
+      font-size: 11px; font-weight: 700; padding: 2px 7px; border-radius: 20px;
+    }
+    .sidebar-bottom {
+      margin-top: auto; padding: 20px; border-top: 1px solid #30363d;
+    }
+    .sidebar-bottom a { color: #8b949e; font-size: 13px; text-decoration: none; }
+    .sidebar-bottom a:hover { color: #e6edf3; }
+
+    /* ---- Main ---- */
+    .main { flex: 1; padding: 28px 32px; overflow-y: auto; }
+    .page-header {
+      display: flex; align-items: center; justify-content: space-between;
+      margin-bottom: 28px;
+    }
+    .page-title { font-size: 22px; font-weight: 800; }
+    .page-sub { font-size: 13px; color: #8b949e; margin-top: 3px; }
+    .btn-refresh {
+      background: #21262d; border: 1px solid #30363d; border-radius: 8px;
+      color: #8b949e; padding: 8px 14px; font-size: 13px; cursor: pointer;
+      transition: all .15s;
+    }
+    .btn-refresh:hover { background: #30363d; color: #e6edf3; }
+
+    /* ---- Tab panels ---- */
+    .tab-panel { display: none; }
+    .tab-panel.active { display: block; }
+
+    /* ---- Stats row ---- */
+    .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 16px; margin-bottom: 24px; }
+    .stat {
+      background: #161b22; border: 1px solid #30363d; border-radius: 12px;
+      padding: 16px 18px;
+    }
+    .stat-label { font-size: 12px; color: #8b949e; font-weight: 600; text-transform: uppercase; letter-spacing: .5px; }
+    .stat-value { font-size: 28px; font-weight: 800; margin-top: 4px; }
+    .stat-value.green  { color: #3fb950; }
+    .stat-value.red    { color: #f85149; }
+    .stat-value.blue   { color: #58a6ff; }
+    .stat-value.orange { color: #e3b341; }
+
+    /* ---- Table ---- */
+    table { width: 100%; border-collapse: collapse; font-size: 14px; }
+    th { text-align: left; padding: 10px 14px; font-size: 11px; font-weight: 700;
+         letter-spacing: .5px; text-transform: uppercase; color: #8b949e;
+         border-bottom: 1px solid #30363d; }
+    td { padding: 11px 14px; border-bottom: 1px solid #21262d; vertical-align: middle; }
+    tr:last-child td { border-bottom: none; }
+    tr:hover td { background: rgba(255,255,255,.02); }
+
+    /* ---- Tags ---- */
+    .tag {
+      display: inline-block; font-size: 12px; font-weight: 600;
+      padding: 3px 9px; border-radius: 20px;
+    }
+    .tag.green  { background: rgba(63,185,80,.15);  color: #3fb950; }
+    .tag.red    { background: rgba(248,81,73,.15);   color: #f85149; }
+    .tag.orange { background: rgba(227,179,65,.15);  color: #e3b341; }
+    .tag.blue   { background: rgba(88,166,255,.12);  color: #58a6ff; }
+    .tag.gray   { background: rgba(255,255,255,.07); color: #8b949e; }
+
+    /* ---- Card container ---- */
+    .card {
+      background: #161b22; border: 1px solid #30363d;
+      border-radius: 12px; overflow: hidden; margin-bottom: 20px;
+    }
+    .card-header {
+      padding: 14px 20px; font-size: 14px; font-weight: 700;
+      border-bottom: 1px solid #30363d; display: flex; align-items: center;
+      justify-content: space-between;
+    }
+    .card-body { padding: 0; }
+
+    /* ---- WhatsApp panel ---- */
+    .wa-list { display: flex; flex-direction: column; gap: 16px; }
+    .wa-item {
+      background: #161b22; border: 1px solid #30363d; border-radius: 12px;
+      padding: 16px 18px;
+    }
+    .wa-item-header {
+      display: flex; align-items: center; justify-content: space-between;
+      margin-bottom: 10px;
+    }
+    .wa-resident { font-weight: 700; font-size: 15px; }
+    .wa-type { font-size: 12px; }
+    .wa-message {
+      background: #0d1117; border: 1px solid #21262d; border-radius: 8px;
+      padding: 12px 14px; font-size: 13px; line-height: 1.6;
+      white-space: pre-wrap; color: #c9d1d9; font-family: monospace;
+      margin-bottom: 10px; max-height: 200px; overflow-y: auto;
+    }
+    .btn-copy {
+      background: #238636; border: none; border-radius: 8px;
+      color: #fff; padding: 8px 14px; font-size: 13px; font-weight: 600;
+      cursor: pointer; transition: background .15s;
+    }
+    .btn-copy:hover { background: #2ea043; }
+    .btn-copy.copied { background: #388e3c; }
+
+    /* ---- Supplies ---- */
+    .supply-alert td:first-child { border-left: 3px solid #f85149; }
+    .supply-ok    td:first-child { border-left: 3px solid #3fb950; }
+
+    /* ---- PINs form ---- */
+    .form-row { display: flex; gap: 10px; align-items: flex-end; flex-wrap: wrap; }
+    .form-group { display: flex; flex-direction: column; gap: 6px; }
+    .form-group label { font-size: 12px; font-weight: 600; color: #8b949e; text-transform: uppercase; letter-spacing: .4px; }
+    .form-group input, .form-group select {
+      background: #0d1117; border: 1px solid #30363d; border-radius: 8px;
+      color: #e6edf3; padding: 9px 12px; font-size: 14px; outline: none;
+      min-width: 160px;
+    }
+    .form-group input:focus, .form-group select:focus { border-color: #58a6ff; }
+    .form-group select option { background: #0d1117; }
+    .btn-add {
+      background: #238636; border: none; border-radius: 8px;
+      color: #fff; padding: 10px 16px; font-size: 14px; font-weight: 600;
+      cursor: pointer; transition: background .15s; height: 39px;
+    }
+    .btn-add:hover { background: #2ea043; }
+    .btn-del {
+      background: transparent; border: 1px solid #30363d; border-radius: 6px;
+      color: #8b949e; padding: 4px 10px; font-size: 12px; cursor: pointer;
+    }
+    .btn-del:hover { background: rgba(248,81,73,.15); border-color: #f85149; color: #f85149; }
+
+    .flash { padding: 12px 16px; border-radius: 8px; font-size: 14px; margin-bottom: 16px; }
+    .flash.success { background: rgba(63,185,80,.12); border: 1px solid rgba(63,185,80,.3); color: #3fb950; }
+    .flash.error   { background: rgba(248,81,73,.12);  border: 1px solid rgba(248,81,73,.3);  color: #f85149; }
+
+    .error-banner {
+      background: rgba(248,81,73,.12); border: 1px solid rgba(248,81,73,.3);
+      border-radius: 12px; padding: 16px 20px; margin-bottom: 24px; color: #f85149;
+    }
+
+    /* ---- Responsive ---- */
+    @media (max-width: 768px) {
+      .sidebar { display: none; }
+      .main { padding: 16px; }
+      .mobile-nav {
+        display: flex; overflow-x: auto; gap: 8px;
+        padding: 12px 0; margin-bottom: 20px; scrollbar-width: none;
+      }
+      .mobile-nav::-webkit-scrollbar { display: none; }
+      .mobile-tab {
+        flex-shrink: 0; padding: 8px 16px; border-radius: 20px;
+        border: 1px solid #30363d; background: #161b22;
+        color: #8b949e; cursor: pointer; font-size: 13px; font-weight: 600;
+        white-space: nowrap;
+      }
+      .mobile-tab.active { background: #58a6ff20; border-color: #58a6ff; color: #58a6ff; }
+    }
+    @media (min-width: 769px) { .mobile-nav { display: none; } }
+  </style>
+</head>
+<body>
+<div class="layout">
+  <!-- Sidebar -->
+  <aside class="sidebar">
+    <div class="sidebar-brand">🏠 La Playa Admin</div>
+
+    <div class="nav-item active" onclick="showTab('turnos', this)">
+      🧹 Turnos semana
+    </div>
+    <div class="nav-item" onclick="showTab('deudas', this)">
+      💰 Deudas
+      {% set deudores = all_debts | selectattr('has_debt') | list %}
+      {% if deudores %}
+      <span class="nav-badge">{{ deudores|length }}</span>
+      {% endif %}
+    </div>
+    <div class="nav-item" onclick="showTab('insumos', this)">
+      🧴 Insumos
+      {% set alertas = supplies | selectattr('alert') | list %}
+      {% if alertas %}
+      <span class="nav-badge">{{ alertas|length }}</span>
+      {% endif %}
+    </div>
+    <div class="nav-item" onclick="showTab('whatsapp', this)" id="nav-whatsapp">
+      📱 WhatsApp
+    </div>
+    <div class="nav-item" onclick="showTab('caja', this)">
+      🏦 Caja
+    </div>
+    <div class="nav-item" onclick="showTab('pins', this)" id="tab-pins-nav">
+      🔑 PINs
+    </div>
+
+    <div class="sidebar-bottom">
+      <a href="/logout">← Cerrar sesión</a>
+    </div>
+  </aside>
+
+  <!-- Main -->
+  <main class="main">
+    <!-- Mobile nav -->
+    <div class="mobile-nav">
+      <div class="mobile-tab active" onclick="showTab('turnos', this)">🧹 Turnos</div>
+      <div class="mobile-tab" onclick="showTab('deudas', this)">💰 Deudas</div>
+      <div class="mobile-tab" onclick="showTab('insumos', this)">🧴 Insumos</div>
+      <div class="mobile-tab" onclick="showTab('whatsapp', this)">📱 WhatsApp</div>
+      <div class="mobile-tab" onclick="showTab('caja', this)">🏦 Caja</div>
+      <div class="mobile-tab" onclick="showTab('pins', this)">🔑 PINs</div>
+    </div>
+
+    {% if error %}
+    <div class="error-banner">⚠️ Error al cargar datos: {{ error }}</div>
+    {% endif %}
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% for cat, msg in messages %}
+      <div class="flash {{ cat }}">{{ msg }}</div>
+      {% endfor %}
+    {% endwith %}
+
+    <!-- ======================== TURNOS ======================== -->
+    <div class="tab-panel active" id="panel-turnos">
+      <div class="page-header">
+        <div>
+          <div class="page-title">Turnos — Semana del {{ week_date or '…' }}</div>
+          <div class="page-sub">{{ week_tasks|length }} asignaciones esta semana</div>
+        </div>
+        <button class="btn-refresh" onclick="refreshCache()">⟳ Actualizar datos</button>
+      </div>
+
+      <div class="stats">
+        <div class="stat">
+          <div class="stat-label">Asignaciones</div>
+          <div class="stat-value blue">{{ week_tasks|length }}</div>
+        </div>
+        <div class="stat">
+          <div class="stat-label">Completadas</div>
+          <div class="stat-value green">{{ week_tasks|selectattr('done')|list|length }}</div>
+        </div>
+        <div class="stat">
+          <div class="stat-label">Pendientes</div>
+          <div class="stat-value orange">{{ week_tasks|rejectattr('done')|rejectattr('absent')|list|length }}</div>
+        </div>
+        <div class="stat">
+          <div class="stat-label">Ausentes</div>
+          <div class="stat-value red">{{ week_tasks|selectattr('absent')|list|length }}</div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-header">Asignaciones de limpieza</div>
+        <div class="card-body">
+          <table>
+            <thead>
+              <tr>
+                <th>Residente</th>
+                <th>Tarea</th>
+                <th>Frecuencia</th>
+                <th>Estado</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for t in week_tasks %}
+              <tr>
+                <td><strong>{{ t.resident }}</strong></td>
+                <td>{{ t.task }}</td>
+                <td style="color: #8b949e;">{{ t.freq }}</td>
+                <td>
+                  {% if t.done %}
+                    <span class="tag green">✓ Cumplió</span>
+                  {% elif t.absent %}
+                    <span class="tag red">Ausente</span>
+                  {% elif t.pending %}
+                    <span class="tag orange">Pendiente</span>
+                  {% else %}
+                    <span class="tag blue">Esta semana</span>
+                  {% endif %}
+                </td>
+              </tr>
+              {% else %}
+              <tr><td colspan="4" style="text-align:center; color:#8b949e; padding:24px;">
+                No hay datos para la semana actual.
+              </td></tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ======================== DEUDAS ======================== -->
+    <div class="tab-panel" id="panel-deudas">
+      <div class="page-header">
+        <div>
+          <div class="page-title">Estado financiero</div>
+          <div class="page-sub">
+            {{ all_debts|selectattr('has_debt')|list|length }} residentes con deuda pendiente
+          </div>
+        </div>
+      </div>
+
+      {% set total_deuda = all_debts|sum(attribute='total') %}
+      <div class="stats">
+        <div class="stat">
+          <div class="stat-label">Deuda total acumulada</div>
+          <div class="stat-value red">${{ '{:,.0f}'.format(total_deuda).replace(',', '.') }}</div>
+        </div>
+        <div class="stat">
+          <div class="stat-label">Con deuda</div>
+          <div class="stat-value orange">{{ all_debts|selectattr('has_debt')|list|length }}</div>
+        </div>
+        <div class="stat">
+          <div class="stat-label">Al día</div>
+          <div class="stat-value green">{{ all_debts|rejectattr('has_debt')|list|length }}</div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-header">Residentes ordenados por deuda</div>
+        <div class="card-body">
+          <table>
+            <thead>
+              <tr>
+                <th>Residente</th>
+                <th>Total</th>
+                <th>Multas</th>
+                <th>Meses pendientes</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for d in all_debts %}
+              <tr>
+                <td><strong>{{ d.name }}</strong></td>
+                <td>
+                  {% if d.total > 0 %}
+                    <span style="color: #f85149; font-weight: 700;">{{ d.debt_str }}</span>
+                  {% else %}
+                    <span style="color: #3fb950;">Al día ✓</span>
+                  {% endif %}
+                </td>
+                <td>
+                  {% if d.multas > 0 %}
+                    <span class="tag red">${{ d.multas|int }}</span>
+                  {% else %}
+                    <span style="color: #8b949e;">—</span>
+                  {% endif %}
+                </td>
+                <td style="font-size: 12px; color: #8b949e;">
+                  {% for month, val in d.monthly.items() %}
+                    {% if val not in ('X', 'x', '-', '') %}
+                      <span style="color:#f85149; margin-right:4px;">{{ month }}</span>
+                    {% endif %}
+                  {% endfor %}
+                </td>
+              </tr>
+              {% else %}
+              <tr><td colspan="4" style="text-align:center; color:#8b949e; padding:24px;">
+                Sin datos financieros.
+              </td></tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ======================== INSUMOS ======================== -->
+    <div class="tab-panel" id="panel-insumos">
+      <div class="page-header">
+        <div>
+          <div class="page-title">Artículos de limpieza</div>
+          <div class="page-sub">
+            {% set alertas = supplies|selectattr('alert')|list %}
+            {% if alertas %}
+              ⚠️ {{ alertas|length }} artículos requieren atención
+            {% else %}
+              Todo el stock está en orden
+            {% endif %}
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-header">Inventario</div>
+        <div class="card-body">
+          <table>
+            <thead>
+              <tr>
+                <th>Artículo</th>
+                <th>Stock actual</th>
+                <th>A comprar</th>
+                <th>Lugar</th>
+                <th>Estado</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for s in supplies %}
+              <tr class="{{ 'supply-alert' if s.alert else 'supply-ok' }}">
+                <td><strong>{{ s.name }}</strong></td>
+                <td>{{ s.current }}</td>
+                <td>{{ s.to_buy }}</td>
+                <td style="color: #8b949e;">{{ s.location or '—' }}</td>
+                <td>
+                  {% if s.alert %}
+                    <span class="tag red">Comprar</span>
+                  {% else %}
+                    <span class="tag green">OK</span>
+                  {% endif %}
+                </td>
+              </tr>
+              {% else %}
+              <tr><td colspan="5" style="text-align:center; color:#8b949e; padding:24px;">
+                Sin datos de insumos.
+              </td></tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ======================== WHATSAPP ======================== -->
+    <div class="tab-panel" id="panel-whatsapp">
+      <div class="page-header">
+        <div>
+          <div class="page-title">Mensajes de WhatsApp</div>
+          <div class="page-sub">Mensajes pre-armados para copiar y pegar</div>
+        </div>
+        <button class="btn-refresh" onclick="loadWhatsApp()">⟳ Regenerar</button>
+      </div>
+
+      <div id="wa-loading" style="color:#8b949e; padding: 20px 0;">
+        Cargando mensajes…
+      </div>
+      <div id="wa-container" class="wa-list" style="display:none;"></div>
+    </div>
+
+    <!-- ======================== CAJA ======================== -->
+    <div class="tab-panel" id="panel-caja">
+      <div class="page-header">
+        <div>
+          <div class="page-title">Movimientos de caja</div>
+          <div class="page-sub">Últimos 30 movimientos</div>
+        </div>
+      </div>
+
+      <div class="stats">
+        <div class="stat">
+          <div class="stat-label">Saldo actual</div>
+          <div class="stat-value {{ 'green' if cash_balance >= 0 else 'red' }}">
+            ${{ '{:,.0f}'.format(cash_balance).replace(',', '.') }}
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-header">Historial</div>
+        <div class="card-body">
+          <table>
+            <thead>
+              <tr>
+                <th>Fecha</th>
+                <th>Residente</th>
+                <th>Ingreso</th>
+                <th>Egreso</th>
+                <th>Detalle</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for m in cash_movements|reverse %}
+              <tr>
+                <td style="color:#8b949e; font-size:13px;">{{ m.date }}</td>
+                <td><strong>{{ m.resident }}</strong></td>
+                <td>
+                  {% if m.income and m.income != '-' %}
+                    <span style="color:#3fb950;">+${{ m.income }}</span>
+                  {% else %}&mdash;{% endif %}
+                </td>
+                <td>
+                  {% if m.expense and m.expense != '-' %}
+                    <span style="color:#f85149;">-${{ m.expense }}</span>
+                  {% else %}&mdash;{% endif %}
+                </td>
+                <td style="font-size:13px; color:#8b949e; max-width:240px;">{{ m.detail }}</td>
+              </tr>
+              {% else %}
+              <tr><td colspan="5" style="text-align:center; color:#8b949e; padding:24px;">
+                Sin movimientos registrados.
+              </td></tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ======================== PINS ======================== -->
+    <div class="tab-panel" id="panel-pins">
+      <div class="page-header">
+        <div>
+          <div class="page-title">Gestión de PINs</div>
+          <div class="page-sub">Los PINs se gestionan editando <code style="color:#58a6ff;">users.json</code> en GitHub</div>
+        </div>
+      </div>
+
+      <!-- Instrucciones -->
+      <div class="card" style="margin-bottom: 20px; border-color: rgba(88,166,255,.3); background: rgba(88,166,255,.05);">
+        <div class="card-header" style="color:#58a6ff;">📋 Cómo agregar o cambiar un PIN</div>
+        <div class="card-body" style="padding: 18px 20px; font-size: 14px; line-height: 1.8; color: #c9d1d9;">
+          <ol style="padding-left: 20px;">
+            <li>Copiá el JSON de abajo con los cambios que quieras hacer</li>
+            <li>Entrá a tu repo en <strong>GitHub</strong> → archivo <code style="color:#58a6ff;">users.json</code></li>
+            <li>Click en el lápiz ✏️ para editar → pegá el contenido → "Commit changes"</li>
+            <li>Railway redeploya solo en ~1 minuto y los cambios quedan activos</li>
+          </ol>
+        </div>
+      </div>
+
+      <!-- Editor de JSON -->
+      <div class="card" style="margin-bottom: 20px;">
+        <div class="card-header">
+          Editor de users.json
+          <button class="btn-copy" onclick="copyPins(this)" style="font-size:12px; padding: 5px 12px;">📋 Copiar</button>
+        </div>
+        <div class="card-body" style="padding: 16px 20px;">
+          <textarea id="pins-editor" style="
+            width: 100%; min-height: 280px; background: #0d1117;
+            border: 1px solid #30363d; border-radius: 8px;
+            color: #e6edf3; font-family: monospace; font-size: 14px;
+            padding: 14px; outline: none; resize: vertical; line-height: 1.6;
+          ">{{ users | tojson(indent=2) }}</textarea>
+          <p style="font-size: 12px; color: #8b949e; margin-top: 10px;">
+            Formato: <code style="color:#58a6ff;">"Nombre": "PIN"</code> — el PIN puede ser cualquier combinación de números.
+          </p>
+        </div>
+      </div>
+
+      <!-- Tabla de PINs actuales (solo lectura) -->
+      <div class="card">
+        <div class="card-header">PINs activos ahora ({{ users|length }} residentes)</div>
+        <div class="card-body">
+          <table>
+            <thead>
+              <tr><th>Residente</th><th>PIN</th></tr>
+            </thead>
+            <tbody>
+              {% for name, pin in users.items() %}
+              <tr>
+                <td><strong>{{ name }}</strong></td>
+                <td style="letter-spacing: 4px; color: #8b949e; font-family: monospace;">
+                  {{ pin }}
+                </td>
+              </tr>
+              {% else %}
+              <tr><td colspan="2" style="text-align:center; color:#8b949e; padding:24px;">
+                No hay PINs configurados. Editá users.json en GitHub para agregar.
+              </td></tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<script>
+  // ---- Tab switching ----
+  function showTab(name, el) {
+    document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+    document.querySelectorAll('.nav-item, .mobile-tab').forEach(n => n.classList.remove('active'));
+    document.getElementById('panel-' + name).classList.add('active');
+    if (el) el.classList.add('active');
+    if (name === 'whatsapp') loadWhatsApp();
+  }
+
+  // Handle #tab-pins hash on redirect from PIN form
+  if (window.location.hash === '#tab-pins') {
+    showTab('pins');
+    document.querySelectorAll('.nav-item')[5]?.classList.add('active');
+    document.querySelectorAll('.nav-item')[0]?.classList.remove('active');
+  }
+
+  // ---- WhatsApp loader ----
+  let waLoaded = false;
+  function loadWhatsApp() {
+    const loading = document.getElementById('wa-loading');
+    const container = document.getElementById('wa-container');
+    loading.style.display = 'block';
+    container.style.display = 'none';
+    waLoaded = false;
+
+    fetch('/api/whatsapp')
+      .then(r => r.json())
+      .then(msgs => {
+        loading.style.display = 'none';
+        if (msgs.error) {
+          loading.textContent = 'Error: ' + msgs.error;
+          loading.style.display = 'block';
+          return;
+        }
+        if (!msgs.length) {
+          container.innerHTML = '<p style="color:#8b949e; padding:20px 0;">No hay mensajes para generar esta semana.</p>';
+          container.style.display = 'block';
+          return;
+        }
+        container.innerHTML = msgs.map((m, i) => `
+          <div class="wa-item">
+            <div class="wa-item-header">
+              <span class="wa-resident">👤 ${m.resident}</span>
+              <span class="wa-type tag ${m.type === 'tarea' ? 'blue' : 'orange'}">
+                ${m.type === 'tarea' ? '🧹 Turno' : '💰 Deuda'}
+              </span>
+            </div>
+            <div class="wa-message" id="msg-${i}">${escapeHtml(m.message)}</div>
+            <button class="btn-copy" onclick="copyMsg(${i}, this)">📋 Copiar</button>
+          </div>
+        `).join('');
+        container.style.display = 'flex';
+        waLoaded = true;
+      })
+      .catch(e => {
+        loading.textContent = 'Error de red: ' + e;
+        loading.style.display = 'block';
+      });
+  }
+
+  function copyMsg(i, btn) {
+    const text = document.getElementById('msg-' + i).textContent;
+    navigator.clipboard.writeText(text).then(() => {
+      btn.textContent = '✅ Copiado!';
+      btn.classList.add('copied');
+      setTimeout(() => {
+        btn.textContent = '📋 Copiar';
+        btn.classList.remove('copied');
+      }, 2000);
+    });
+  }
+
+  function escapeHtml(str) {
+    return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  }
+
+  // ---- Copy PINs JSON ----
+  function copyPins(btn) {
+    const text = document.getElementById('pins-editor').value;
+    navigator.clipboard.writeText(text).then(() => {
+      btn.textContent = '✅ Copiado!';
+      setTimeout(() => btn.textContent = '📋 Copiar', 2000);
+    });
+  }
+
+  // ---- Cache refresh ----
+  function refreshCache() {
+    fetch('/api/refresh', { method: 'POST' })
+      .then(r => r.json())
+      .then(d => {
+        alert(d.message || 'Datos actualizados.');
+        location.reload();
+      })
+      .catch(() => alert('Error al actualizar.'));
+  }
+</script>
+</body>
+</html>
